@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SimplexMethodBMSTU
 {
     class SimplexMethod
@@ -7,14 +9,12 @@ namespace SimplexMethodBMSTU
         //bool
         // 1. Столбец S
         // 2. Массив с кэфами
-        // 3. Базисные переменные
-        // F строка
+        // 3. F строка(целевая функция)
         decimal[] cols = null!; // cтолбец s
         decimal[] cols_new = null!;
         decimal[,] matrix = null!; // массив с кэфами
         decimal[] F = null!;
         decimal[] F_new = null!;
-        int[] basis = null!; // базисные переменные
         decimal[,] matrix_new = null!; // массив с кэфами после преобразования
         public SimplexMethod(int n, int m)
         {
@@ -27,7 +27,6 @@ namespace SimplexMethodBMSTU
             cols = new decimal[m];
             matrix = new decimal[m, n];
             F = new decimal[n + 1];
-            basis = new int[m];
             matrix_new = new decimal[m, n];
             F_new = new decimal[n + 1];
             cols_new = new decimal[m];
@@ -51,11 +50,6 @@ namespace SimplexMethodBMSTU
             for (int i = 0; i < n + 1; i++)
             {
                 F[i] = decimal.Parse(Console.ReadLine()!);
-            }
-            Console.WriteLine("Введите базисные переменные:");
-            for (int i = 0; i < m; i++)
-            {
-                basis[i] = int.Parse(Console.ReadLine()!);
             }
         }
 
@@ -83,12 +77,6 @@ namespace SimplexMethodBMSTU
             for (int i = 0; i < n + 1; i++)
             {
                 Console.Write(F[i] + " ");
-            }
-            Console.WriteLine();
-            Console.WriteLine("Базисные переменные:");
-            for (int i = 0; i < m; i++)
-            {
-                Console.Write(basis[i] + " ");
             }
             Console.WriteLine();
         }
@@ -144,7 +132,7 @@ namespace SimplexMethodBMSTU
             int c = 0;
             for(int i = 0; i<m; ++i)
             {
-                if(matrix[i,Find_col()] > 0)
+                if(matrix[i,Find_col()] != 0)
                 {
                     if(cols[i]/matrix[i,Find_col()] > 0)
                         {
@@ -200,17 +188,52 @@ namespace SimplexMethodBMSTU
                     cols_new[i] = cols[i] - (matrix[i,Find_col()]*cols[Find_row()])/matrix[Find_row(),Find_col()];
                 }
             }
-            F_new[n] = -F[n]/matrix_new[Find_row(),Find_col()];
-            for(int i = 0; i<n; ++i)
+            F_new[Find_col()+1] = -F[Find_col()+1]/matrix[Find_row(),Find_col()];
+            F_new[0] = F[0] - ((F[Find_col()+1]*cols[Find_row()])/matrix[Find_row(),Find_col()]);
+            int variable = 1;
+            for(int i = 1; i<n+1; ++i)
             {
-                if(i != Find_col())
+                if(i != Find_col()+1)
                 {
-                    F_new[i] = F[i] - (F[Find_col()]*matrix[Find_row(),i])/matrix[Find_row(),Find_col()];
+                    F_new[i] = F[i] - (F[Find_col()+1]*matrix[Find_row(),variable])/matrix[Find_row(),Find_col()];
+                    ++variable;
                 }
             }
         }
 
 
+        int CheckSystem()
+        {
+            for(int i = 0; i<m; ++i)
+            {
+                int temp_variable = 0;
+                if(cols[i] >= 0)
+                {
+                    Console.Write("Система имеет бесконечно много решений");
+                    //exit(0);
+                }
+                if(cols[i] < 0)
+                {
+                    for(int j = 0; j<n; ++j)
+                    {
+                        if(matrix[i,j] > 0)
+                        {
+                            Console.Write("Система не имеет решений");
+                            //exit(0);
+                        }
+                        if(matrix[i,j] < 0)
+                        {
+                            return 4; // По номеру возвращающегося значения обработать исключение || Запускаем симплекс-меетод
+                        }
+                        else
+                        {
+                            //exit(0);
+                        }
+                    }
+                }
+            }
+            
+        }
 
 
 
