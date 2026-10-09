@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection.Metadata.Ecma335;
 
 namespace SimplexMethodBMSTU
 {
@@ -130,13 +131,14 @@ namespace SimplexMethodBMSTU
             decimal a;
             decimal b = 10000000000000000000m;
             int c = 0;
+            int col_find = Find_col();
             for(int i = 0; i<m; ++i)
             {
-                if(matrix[i,Find_col()] != 0)
+                if(matrix[i,col_find] != 0)
                 {
-                    if(cols[i]/matrix[i,Find_col()] > 0)
+                    if(cols[i]/matrix[i,col_find] > 0)
                         {
-                            a = cols[i]/matrix[i,Find_col()];
+                            a = cols[i]/matrix[i,col_find];
                             if(a < b)
                             {
                                 b = a;
@@ -150,89 +152,185 @@ namespace SimplexMethodBMSTU
         }
 
         // Преобразование симплекс-таблицы
-        void SimplexTab()
+        void SimplexTab(Func<int> Find_rowfunc, Func<int> Find_colfunc) 
         {
-            matrix_new[Find_row(),Find_col()] = 1/matrix[Find_row(),Find_col()];
+            int Find_row1 = Find_rowfunc;
+            int Find_col1 = Find_colfunc;
+            matrix_new[Find_row1,Find_col1] = 1/matrix[Find_row1,Find_col1];
             for(int i = 0; i<n; ++i)
             {
-                if(i != Find_col())
+                if(i != Find_col1)
                 {
-                    matrix_new[Find_row(),i] = matrix[Find_row(),i]/matrix[Find_row(),Find_col()];
+                    matrix_new[Find_row1,i] = matrix[Find_row1,i]/matrix[Find_row1,Find_col1];
                 }
             }
             for(int i = 0; i<m; ++i)
             {
-                if(i != Find_row())
+                if(i != Find_row1)
                 {
-                    matrix_new[i,Find_col()] = -matrix[i,Find_col()]/matrix[Find_row(),Find_col()];
+                    matrix_new[i,Find_col1] = -matrix[i,Find_col1]/matrix[Find_row1,Find_col1];
                 }
             }
             for(int i = 0; i<m; ++i)
             {
-                if(i != Find_row())
+                if(i != Find_row1)
                 {
                     for(int j = 0; j<n; ++j)
                     {
-                        if(j != Find_col())
+                        if(j != Find_col1)
                         {
-                            matrix_new[i,j] = matrix[i,j] - (matrix[Find_row(),j]*matrix[i,Find_col()])/matrix[Find_row(),Find_col()];
+                            matrix_new[i,j] = matrix[i,j] - (matrix[Find_row1,j]*matrix[i,Find_col1])/matrix[Find_row1,Find_col1];
                         }
                     }
                 }
             }
-            cols_new[Find_row()] = cols[Find_row()]/matrix[Find_row(),Find_col()];
+            cols_new[Find_row1] = cols[Find_row1]/matrix[Find_row1,Find_col1];
             for(int i = 0; i<m; ++i)
             {
-                if(i != Find_row())
+                if(i != Find_row1)
                 {
-                    cols_new[i] = cols[i] - (matrix[i,Find_col()]*cols[Find_row()])/matrix[Find_row(),Find_col()];
+                    cols_new[i] = cols[i] - (matrix[i,Find_col1]*cols[Find_row1])/matrix[Find_row1,Find_col1];
                 }
             }
-            F_new[Find_col()+1] = -F[Find_col()+1]/matrix[Find_row(),Find_col()];
-            F_new[0] = F[0] - ((F[Find_col()+1]*cols[Find_row()])/matrix[Find_row(),Find_col()]);
+            F_new[Find_col1+1] = -F[Find_col1+1]/matrix[Find_row1,Find_col1];
+            F_new[0] = F[0] - ((F[Find_col1+1]*cols[Find_row1])/matrix[Find_row1,Find_col1]);
             int variable = 1;
             for(int i = 1; i<n+1; ++i)
             {
-                if(i != Find_col()+1)
+                if(i != Find_col1+1)
                 {
-                    F_new[i] = F[i] - (F[Find_col()+1]*matrix[Find_row(),variable])/matrix[Find_row(),Find_col()];
+                    F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
                     ++variable;
                 }
             }
         }
 
-
+        // Функция для проверки наличия решения
         int CheckSystem()
         {
             for(int i = 0; i<m; ++i)
             {
-                int temp_variable = 0;
                 if(cols[i] >= 0)
                 {
-                    Console.Write("Система имеет бесконечно много решений");
-                    //exit(0);
+                    Console.Write("Найдено опорное решение!"); // Опорное решение только, если все свободные кэфы >= 0
+                    return 5; // Опорное решение найдено, продолжаем симплекс-метод
                 }
                 if(cols[i] < 0)
                 {
                     for(int j = 0; j<n; ++j)
                     {
-                        if(matrix[i,j] > 0)
-                        {
-                            Console.Write("Система не имеет решений");
-                            //exit(0);
-                        }
                         if(matrix[i,j] < 0)
                         {
-                            return 4; // По номеру возвращающегося значения обработать исключение || Запускаем симплекс-меетод
-                        }
-                        else
-                        {
-                            //exit(0);
+                            return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
+                            //симплекс-метод
                         }
                     }
                 }
             }
             
+        }
+
+        // Функция для поиска нового разрешающего столбца
+        int Find_col_after_general_solver()
+        {
+            for(int i = 0; i<n; ++i)
+            {
+                if(F_new[i] > 0)
+                {
+                    return i;
+                }
+            }
+        }
+
+        // Функция для поиска новой разрешающей строки
+        int Find_row_after_general_solver()
+        {
+            decimal a;
+            decimal c = 10000000000000000000m;
+            int b = Find_col_after_general_solver();
+            int g;
+            for(int i = 0; j<m; ++j)
+            {
+                if (matrix_new[i,b] != 0)
+                {
+                    if(cols_new[i]/matrix_new[i,b] > 0)
+                    {
+                        a = cols_new[i] / matrix_new[i,b];
+                        if(a<c)
+                        {
+                            c = a;
+                            g = i;
+                        }
+                    }
+                }
+            }
+            return g;
+        }
+
+        // Функция для перемешивания массивов, чтобы реализовать цикл while в функции main_func_for_oprimization для применения симплекс-метода
+        // пока не будет получено опорное решение
+        public void Refuel_mass()
+        {
+            for(int i = 0; i<m; ++i)
+            {
+                cols[i] = cols_new[i];
+                for(int j = 0; j<n; ++j)
+                {
+                    matrix[i,j] = matrix_new[i,j];
+                }
+            }
+            for(int i = 0; i<n+1; ++i)
+            {
+                F[i] = F_new[i];
+            }
+        }
+
+        // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
+        void main_func_for_oprimization()
+        {
+            SimplexMethod.Input();
+            SimplexMethod.Print();
+            int check_system = CheckSystem();
+            if(check_system = 5)
+            {
+                for(int i = 1; i<n+1; ++i)
+                {
+                    while(F[i] > 0)
+                    {
+                        SimplexMethod.SimplexTab(Find_row_after_general_solver(),Find_col_after_general_solver());
+                        SimplexMethod.Refuel_mass();
+                    }
+                    // Дописать вывод получившейся таблицы!
+                }
+                // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
+            }
+            if(check_system = 4)
+            {
+                for(int i = 0; i<m; ++i)
+                {
+                    while(cols[i] < 0)
+                    {
+                        SimplexMethod.SimplexTab(Find_row(),Find_col());
+                        SimplexMethod.Refuel_mass();
+                    }
+                }
+                // Дописать вывод получившейся таблицы
+                for(int i = 1; i<n+1; ++i)
+                {
+                    while(F[i] > 0)
+                    {
+                        SimplexMethod.SimplexTab(Find_row_after_general_solver(),Find_col_after_general_solver());
+                        SimplexMethod.Refuel_mass();
+                    }
+                }
+                // Дописать вывод получившейся таблицы
+                // exit(0) Программа завершена!!!
+            }
+            else
+            {
+                Console.Write("Система не имеет решений");
+                Environment.Exit(0);
+            }
         }
 
 
@@ -248,7 +346,8 @@ namespace SimplexMethodBMSTU
             var simplexMethod = new SimplexMethod(n, m);
             simplexMethod.Input();
             simplexMethod.Print();
-            simplexMethod.SimplexTab();
+            //simplexMethod.CheckSystem();
+            //simplexMethod.SimplexTab();
             simplexMethod.PrintSimplexTab();
 
 
