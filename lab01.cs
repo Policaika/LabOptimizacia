@@ -154,8 +154,8 @@ namespace SimplexMethodBMSTU
         // Преобразование симплекс-таблицы
         void SimplexTab(Func<int> Find_rowfunc, Func<int> Find_colfunc) 
         {
-            int Find_row1 = Find_rowfunc;
-            int Find_col1 = Find_colfunc;
+            int Find_row1 = Find_rowfunc();
+            int Find_col1 = Find_colfunc();
             matrix_new[Find_row1,Find_col1] = 1/matrix[Find_row1,Find_col1];
             for(int i = 0; i<n; ++i)
             {
@@ -210,11 +210,6 @@ namespace SimplexMethodBMSTU
         {
             for(int i = 0; i<m; ++i)
             {
-                if(cols[i] >= 0)
-                {
-                    Console.Write("Найдено опорное решение!"); // Опорное решение только, если все свободные кэфы >= 0
-                    return 5; // Опорное решение найдено, продолжаем симплекс-метод
-                }
                 if(cols[i] < 0)
                 {
                     for(int j = 0; j<n; ++j)
@@ -227,7 +222,8 @@ namespace SimplexMethodBMSTU
                     }
                 }
             }
-            
+            return 5; // Опорное решение только, если все свободные кэфы >= 0
+            // Опорное решение найдено, продолжаем симплекс-метод
         }
 
         // Функция для поиска нового разрешающего столбца
@@ -240,6 +236,7 @@ namespace SimplexMethodBMSTU
                     return i;
                 }
             }
+            return -1;
         }
 
         // Функция для поиска новой разрешающей строки
@@ -248,8 +245,8 @@ namespace SimplexMethodBMSTU
             decimal a;
             decimal c = 10000000000000000000m;
             int b = Find_col_after_general_solver();
-            int g;
-            for(int i = 0; j<m; ++j)
+            int g = -1;
+            for(int i = 0; i<m; ++i)
             {
                 if (matrix_new[i,b] != 0)
                 {
@@ -288,30 +285,30 @@ namespace SimplexMethodBMSTU
         // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
         void main_func_for_oprimization()
         {
-            SimplexMethod.Input();
-            SimplexMethod.Print();
+            Input();
+            Print();
             int check_system = CheckSystem();
-            if(check_system = 5)
+            if(check_system == 5)
             {
                 for(int i = 1; i<n+1; ++i)
                 {
                     while(F[i] > 0)
                     {
-                        SimplexMethod.SimplexTab(Find_row_after_general_solver(),Find_col_after_general_solver());
-                        SimplexMethod.Refuel_mass();
+                        SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
+                        Refuel_mass();
                     }
                     // Дописать вывод получившейся таблицы!
                 }
                 // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
             }
-            if(check_system = 4)
+            if(check_system == 4)
             {
                 for(int i = 0; i<m; ++i)
                 {
                     while(cols[i] < 0)
                     {
-                        SimplexMethod.SimplexTab(Find_row(),Find_col());
-                        SimplexMethod.Refuel_mass();
+                        SimplexTab(Find_row,Find_col);
+                        Refuel_mass();
                     }
                 }
                 // Дописать вывод получившейся таблицы
@@ -319,8 +316,8 @@ namespace SimplexMethodBMSTU
                 {
                     while(F[i] > 0)
                     {
-                        SimplexMethod.SimplexTab(Find_row_after_general_solver(),Find_col_after_general_solver());
-                        SimplexMethod.Refuel_mass();
+                        SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
+                        Refuel_mass();
                     }
                 }
                 // Дописать вывод получившейся таблицы
@@ -344,10 +341,9 @@ namespace SimplexMethodBMSTU
             int n = int.Parse(Console.ReadLine()!);
 
             var simplexMethod = new SimplexMethod(n, m);
-            simplexMethod.Input();
-            simplexMethod.Print();
             //simplexMethod.CheckSystem();
             //simplexMethod.SimplexTab();
+            simplexMethod.main_func_for_oprimization();
             simplexMethod.PrintSimplexTab();
 
 
