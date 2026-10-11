@@ -194,13 +194,32 @@ namespace SimplexMethodBMSTU
             }
             F_new[Find_col1+1] = -F[Find_col1+1]/matrix[Find_row1,Find_col1];
             F_new[0] = F[0] - ((F[Find_col1+1]*cols[Find_row1])/matrix[Find_row1,Find_col1]);
-            int variable = 1;
-            for(int i = 1; i<n+1; ++i)
+            if(Find_col1 == n - 1)
             {
-                if(i != Find_col1+1)
+                int variable = 0;
+                for(int i = 1; i<n+1; ++i)
                 {
-                    F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
-                    ++variable;
+                    if(i != Find_col1+1)
+                    {
+                        //Console.WriteLine();
+                        F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
+                        //Console.WriteLine($"F_new[i] = {F[i]} - ({F[Find_col1+1]}*{matrix[Find_row1,variable]})/{matrix[Find_row1,Find_col1]}");
+                        ++variable;
+                    }
+                }
+            }
+            else
+            {
+                int variable = 1;
+                for(int i = 1; i<n+1; ++i)
+                {
+                    if(i != Find_col1+1)
+                    {
+                        //Console.WriteLine();
+                        F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
+                        //Console.WriteLine($"F_new[i] = {F[i]} - ({F[Find_col1+1]}*{matrix[Find_row1,variable]})/{matrix[Find_row1,Find_col1]}");
+                        ++variable;
+                    }
                 }
             }
         }
@@ -229,11 +248,11 @@ namespace SimplexMethodBMSTU
         // Функция для поиска нового разрешающего столбца
         int Find_col_after_general_solver()
         {
-            for(int i = 0; i<n; ++i)
+            for(int i = 1; i<n+1; ++i)
             {
                 if(F_new[i] > 0)
                 {
-                    return i;
+                    return i-1;
                 }
             }
             return -1;
@@ -282,6 +301,25 @@ namespace SimplexMethodBMSTU
             }
         }
 
+        void PrintAfterGeneralSolver()
+        {
+            for(int i = 0; i<m; ++i)
+            {
+                Console.Write(cols[i] + "\t");
+                for(int j = 0; j<n; ++j)
+                {
+                    Console.Write(matrix[i,j] + "\t");
+                }
+                Console.WriteLine();
+            }
+            for(int i = 0; i<n+1; ++i)
+            {
+                Console.Write(F[i] + "\t");
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+        }
+
         // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
         void main_func_for_oprimization()
         {
@@ -297,7 +335,7 @@ namespace SimplexMethodBMSTU
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
                     }
-                    // Дописать вывод получившейся таблицы!
+                    PrintAfterGeneralSolver();
                 }
                 // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
             }
@@ -310,8 +348,8 @@ namespace SimplexMethodBMSTU
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
                     }
+                    PrintAfterGeneralSolver();
                 }
-                // Дописать вывод получившейся таблицы
                 for(int i = 1; i<n+1; ++i)
                 {
                     while(F[i] > 0)
@@ -319,15 +357,16 @@ namespace SimplexMethodBMSTU
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
                     }
+                    PrintAfterGeneralSolver();
                 }
                 // Дописать вывод получившейся таблицы
                 // exit(0) Программа завершена!!!
             }
-            else
-            {
-                Console.Write("Система не имеет решений");
-                Environment.Exit(0);
-            }
+            // else 
+            // {
+            //     Console.Write("Система не имеет решений");
+            //     Environment.Exit(0);
+            // }
         }
 
 
