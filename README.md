@@ -8,6 +8,7 @@ namespace SimplexMethodBMSTU
     {
         int n; // свободные переменные (столбики)
         int m; // базисные переменные ( cтроки)
+        int selected_row; // Для подсчета строки в функции Find_col()
         //bool
         // 1. Столбец S
         // 2. Массив с кэфами
@@ -103,25 +104,33 @@ namespace SimplexMethodBMSTU
             }
         }
 
-        // Поиск первого отрицательного элемента в столбце S
-        int Find()
-        {
-            for (int i = 0; i < m; i++)
-            {
-                if (cols[i] < 0)
-                    return i;
-            }
-            return -1;
-        }
+        // // Поиск первого отрицательного элемента в столбце S
+        // int Find()
+        // {
+        //     for (int i = 0; i < m; i++)
+        //     {
+        //         if (cols[i] < 0)
+        //             return i;
+        //     }
+        //     return -1;
+        // }
 
         // Поиск разщешающего столбца
         int Find_col()
         {
-            int index = Find();
-            for (int i = 0; i < n; i++)
+            for(int j = 0; j<m; ++j)
             {
-                if (matrix[index, i] < 0)
-                    return i;
+                if(cols[j] < 0)
+                {
+                    for (int i = 0; i < n; i++)
+                    {
+                        if (matrix[j, i] < 0)
+                        {
+                            return i;
+                        }
+                    } 
+                }
+
             }
             return -1;
         }
@@ -138,14 +147,14 @@ namespace SimplexMethodBMSTU
                 if(matrix[i,col_find] != 0)
                 {
                     if(cols[i]/matrix[i,col_find] > 0)
+                    {
+                        a = cols[i]/matrix[i,col_find];
+                        if(a < b)
                         {
-                            a = cols[i]/matrix[i,col_find];
-                            if(a < b)
-                            {
-                                b = a;
-                                c = i;
-                            }
-                        }  
+                            b = a;
+                            c = i;
+                        }
+                    }  
                 }
 
             }
