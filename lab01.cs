@@ -1,5 +1,8 @@
 using System.Globalization;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices.Marshalling;
+using System.Runtime.Intrinsics.Arm;
+using System.Threading.Channels;
 
 namespace SimplexMethodBMSTU
 {
@@ -329,6 +332,7 @@ namespace SimplexMethodBMSTU
             Console.WriteLine();
         }
 
+
         // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
         void main_func_for_oprimization()
         {
@@ -350,15 +354,32 @@ namespace SimplexMethodBMSTU
             }
             if(check_system == 4)
             {
-                for(int i = 0; i<m; ++i)
+                CV
+                while(IsItTrue)
                 {
-                    while(cols[i] < 0)
+                    bool IsItTrue = false;
+                    for(int i = 0; i<m; ++i)
+                    {
+                        IsItTrue = true;
+                        break;
+                    }
+                    if(IsItTrue)
                     {
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
                     }
-                    PrintAfterGeneralSolver();
                 }
+                // for(int i = 0; i<m; ++i)
+                // {
+                //     while(cols[i] < 0)
+                //     {
+                //         SimplexTab(Find_row,Find_col);
+                //         Refuel_mass();
+                //     }
+                //     PrintAfterGeneralSolver();
+                //     // перменная
+                //     // break
+                // }
                 for(int i = 1; i<n+1; ++i)
                 {
                     while(F[i] > 0)
