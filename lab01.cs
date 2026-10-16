@@ -354,7 +354,6 @@ namespace SimplexMethodBMSTU
             }
             if(check_system == 4)
             {
-                CV
                 while(IsItTrue)
                 {
                     bool IsItTrue = false;
