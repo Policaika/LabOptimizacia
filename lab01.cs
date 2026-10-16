@@ -341,31 +341,46 @@ namespace SimplexMethodBMSTU
             int check_system = CheckSystem();
             if(check_system == 5)
             {
-                for(int i = 1; i<n+1; ++i)
+                bool IsItTrue = true;
+                while(IsItTrue)
                 {
-                    while(F[i] > 0)
+                    IsItTrue = false;
+                    for(int i = 1; i<n+1; ++i)
                     {
-                        SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
-                        Refuel_mass();
+                        if(F[i] > 0)
+                        {
+                            IsItTrue = true;
+                            break;
+                        }
                     }
-                    PrintAfterGeneralSolver();
+                    if(IsItTrue)
+                    {
+                        SimplexTab(Find_col_after_general_solver,Find_row_after_general_solver);
+                        Refuel_mass();
+                        PrintAfterGeneralSolver();
+                    }
                 }
                 // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
             }
             if(check_system == 4)
             {
+                bool IsItTrue = true;
                 while(IsItTrue)
                 {
-                    bool IsItTrue = false;
+                    IsItTrue = false;
                     for(int i = 0; i<m; ++i)
                     {
-                        IsItTrue = true;
-                        break;
+                        if(cols[i] < 0)
+                        {
+                            IsItTrue = true;
+                            break;
+                        }
                     }
                     if(IsItTrue)
                     {
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
+                        PrintAfterGeneralSolver();
                     }
                 }
                 // for(int i = 0; i<m; ++i)
@@ -379,14 +394,23 @@ namespace SimplexMethodBMSTU
                 //     // перменная
                 //     // break
                 // }
-                for(int i = 1; i<n+1; ++i)
+                while(IsItTrue)
                 {
-                    while(F[i] > 0)
+                    IsItTrue = false;
+                    for(int i = 1; i<n+1; ++i)
                     {
-                        SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
-                        Refuel_mass();
+                        if(F[i] > 0)
+                        {
+                            IsItTrue = true;
+                            break;
+                        }
                     }
-                    PrintAfterGeneralSolver();
+                    if(IsItTrue)
+                    {
+                        SimplexTab(Find_col_after_general_solver,Find_row_after_general_solver);
+                        Refuel_mass();
+                        PrintAfterGeneralSolver();
+                    }
                 }
                 // Дописать вывод получившейся таблицы
                 // exit(0) Программа завершена!!!
