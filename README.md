@@ -1,6 +1,9 @@
 ```C#
 using System.Globalization;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices.Marshalling;
+using System.Runtime.Intrinsics.Arm;
+using System.Threading.Channels;
 
 namespace SimplexMethodBMSTU
 {
@@ -8,7 +11,6 @@ namespace SimplexMethodBMSTU
     {
         int n; // свободные переменные (столбики)
         int m; // базисные переменные ( cтроки)
-        int selected_row; // Для подсчета строки в функции Find_col()
         //bool
         // 1. Столбец S
         // 2. Массив с кэфами
@@ -82,6 +84,7 @@ namespace SimplexMethodBMSTU
                 Console.Write(F[i] + " ");
             }
             Console.WriteLine();
+            Console.WriteLine();
         }
 
         // Вывод получившейся симплекс таблицы
@@ -140,7 +143,7 @@ namespace SimplexMethodBMSTU
         {
             decimal a;
             decimal b = 10000000000000000000m;
-            int c = 0;
+            int c = -1;
             int col_find = Find_col();
             for(int i = 0; i<m; ++i)
             {
@@ -248,6 +251,10 @@ namespace SimplexMethodBMSTU
                             return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
                             //симплекс-метод
                         }
+                        else
+                        {
+                            return 3; // В строке S нет отрицательных элементов => система не имеет решений
+                        }
                     }
                 }
             }
@@ -262,7 +269,7 @@ namespace SimplexMethodBMSTU
             {
                 if(F_new[i] > 0)
                 {
-                    return i-1;
+                    return --i;
                 }
             }
             return -1;
@@ -330,44 +337,97 @@ namespace SimplexMethodBMSTU
             Console.WriteLine();
         }
 
+
         // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
         void main_func_for_oprimization()
         {
             Input();
             Print();
+            PrintAfterGeneralSolver();
             int check_system = CheckSystem();
+            if(check_system == 3)
+            {
+                Console.WriteLine("Система не имеет решений");
+                Environment.Exit(0);
+            }
             if(check_system == 5)
             {
-                for(int i = 1; i<n+1; ++i)
+                bool IsItTrue = true;
+                while(IsItTrue)
                 {
-                    while(F[i] > 0)
+                    IsItTrue = false;
+                    for(int i = 1; i<n+1; ++i)
+                    {
+                        if(F[i] > 0)
+                        {
+                            IsItTrue = true;
+                            break;
+                        }
+                    }
+                    if(IsItTrue)
                     {
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
+                        PrintAfterGeneralSolver();
                     }
-                    PrintAfterGeneralSolver();
                 }
                 // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
             }
             if(check_system == 4)
             {
-                for(int i = 0; i<m; ++i)
+                bool IsItTrue = true;
+                while(IsItTrue)
                 {
-                    while(cols[i] < 0)
+                    IsItTrue = false;
+                    for(int i = 0; i<m; ++i)
+                    {
+                        if(cols[i] < 0)
+                        {
+                            IsItTrue = true;
+                            break;
+                        }
+                    }
+                    if(IsItTrue)
                     {
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
+                        PrintAfterGeneralSolver();
                     }
-                    PrintAfterGeneralSolver();
                 }
-                for(int i = 1; i<n+1; ++i)
+                // for(int i = 0; i<m; ++i)
+                // {
+                //     while(cols[i] < 0)
+                //     {
+                //         SimplexTab(Find_row,Find_col);
+                //         Refuel_mass();
+                //     }
+                //     PrintAfterGeneralSolver();
+                //     // перменная
+                //     // break
+                // }
+                if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
                 {
-                    while(F[i] > 0)
+                    Console.WriteLine("Система не имеет решений");
+                    Environment.Exit(0);
+                }
+                IsItTrue = true;
+                while(IsItTrue)
+                {
+                    IsItTrue = false;
+                    for(int i = 1; i<n+1; ++i)
+                    {
+                        if(F[i] > 0)
+                        {
+                            IsItTrue = true;
+                            break;
+                        }
+                    }
+                    if(IsItTrue)
                     {
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
+                        PrintAfterGeneralSolver();
                     }
-                    PrintAfterGeneralSolver();
                 }
                 // Дописать вывод получившейся таблицы
                 // exit(0) Программа завершена!!!
