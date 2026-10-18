@@ -18,6 +18,7 @@ namespace SimplexMethodBMSTU
         decimal[] cols_new = null!;
         decimal[,] matrix = null!; // массив с кэфами
         decimal[] F = null!;
+        string Func = null!; // Определение функции (max/min)
         decimal[] F_new = null!;
         decimal[,] matrix_new = null!; // массив с кэфами после преобразования
         public SimplexMethod(int n, int m)
@@ -37,6 +38,9 @@ namespace SimplexMethodBMSTU
         }
         public void Input()
         {
+            Console.Write("Выберите к чему стремится функция (max/min): ");
+            Func = Console.ReadLine();
+
             Console.WriteLine("Введите столбец S:");
             for (int i = 0; i < m; i++)
             {
@@ -51,13 +55,21 @@ namespace SimplexMethodBMSTU
                 }
             }
             Console.WriteLine("Введите строку F:");
-            for (int i = 0; i < n + 1; i++)
+            if(Func == "min")
             {
-                F[i] = decimal.Parse(Console.ReadLine()!);
+                for (int i = 0; i < n + 1; i++)
+                {
+                    F[i] = decimal.Parse(Console.ReadLine()!);
+                }
+            }
+            else if(Func == "max")
+            {
+                for (int i = 0; i < n + 1; i++)
+                {
+                    F[i] = -decimal.Parse(Console.ReadLine()!);
+                }
             }
         }
-
-
 
 
         public void Print()
@@ -104,18 +116,9 @@ namespace SimplexMethodBMSTU
             {
                 Console.Write(F_new[i] + "\t");
             }
+            Console.WriteLine($"\n\nF = {F[0]}");
         }
 
-        // // Поиск первого отрицательного элемента в столбце S
-        // int Find()
-        // {
-        //     for (int i = 0; i < m; i++)
-        //     {
-        //         if (cols[i] < 0)
-        //             return i;
-        //     }
-        //     return -1;
-        // }
 
         // Поиск разщешающего столбца
         int Find_col()
@@ -213,9 +216,7 @@ namespace SimplexMethodBMSTU
                 {
                     if(i != Find_col1+1)
                     {
-                        //Console.WriteLine();
                         F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
-                        //Console.WriteLine($"F_new[i] = {F[i]} - ({F[Find_col1+1]}*{matrix[Find_row1,variable]})/{matrix[Find_row1,Find_col1]}");
                         ++variable;
                     }
                 }
@@ -227,9 +228,7 @@ namespace SimplexMethodBMSTU
                 {
                     if(i != Find_col1+1)
                     {
-                        //Console.WriteLine();
                         F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
-                        //Console.WriteLine($"F_new[i] = {F[i]} - ({F[Find_col1+1]}*{matrix[Find_row1,variable]})/{matrix[Find_row1,Find_col1]}");
                         ++variable;
                     }
                 }
@@ -239,6 +238,8 @@ namespace SimplexMethodBMSTU
         // Функция для проверки наличия решения
         int CheckSystem()
         {
+            int CountVariable = 0;
+            bool IfHasntASolver = true;
             for(int i = 0; i<m; ++i)
             {
                 if(cols[i] < 0)
@@ -247,28 +248,51 @@ namespace SimplexMethodBMSTU
                     {
                         if(matrix[i,j] < 0)
                         {
+                            IfHasntASolver = false;
                             return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
                             //симплекс-метод
                         }
-                        else
-                        {
-                            return 3; // В строке S нет отрицательных элементов => система не имеет решений
-                        }
                     }
                 }
+                else
+                {
+                   ++CountVariable; 
+                }
             }
-            return 5; // Опорное решение только, если все свободные кэфы >= 0
+            if(CountVariable == m)
+            {
+                IfHasntASolver = false;
+                return 5; // Опорное решение только, если все свободные кэфы >= 0
             // Опорное решение найдено, продолжаем симплекс-метод
+            }
+            if(IfHasntASolver)
+            {
+                return 3; // В строке S нет отрицательных элементов => система не имеет решений
+            }
+            return -1;
         }
 
         // Функция для поиска нового разрешающего столбца
         int Find_col_after_general_solver()
         {
-            for(int i = 1; i<n+1; ++i)
+            if(Func == "min")
             {
-                if(F_new[i] > 0)
+                for(int i = 1; i<n+1; ++i)
                 {
-                    return --i;
+                    if(F[i] > 0)
+                    {
+                        return --i;
+                    }
+                }
+            }
+            else if(Func == "max")
+            {
+                for(int i = 1; i<n+1; ++i)
+                {
+                    if(F[i] < 0)
+                    {
+                        return --i;
+                    }
                 }
             }
             return -1;
@@ -283,11 +307,11 @@ namespace SimplexMethodBMSTU
             int g = -1;
             for(int i = 0; i<m; ++i)
             {
-                if (matrix_new[i,b] != 0)
+                if (matrix[i,b] != 0)
                 {
-                    if(cols_new[i]/matrix_new[i,b] > 0)
+                    if(cols[i]/matrix[i,b] > 0)
                     {
-                        a = cols_new[i] / matrix_new[i,b];
+                        a = cols[i] / matrix[i,b];
                         if(a<c)
                         {
                             c = a;
@@ -351,17 +375,36 @@ namespace SimplexMethodBMSTU
             }
             if(check_system == 5)
             {
+                if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
+                {
+                    Console.WriteLine("Система не имеет решений");
+                    Environment.Exit(0);
+                }
                 bool IsItTrue = true;
                 while(IsItTrue)
                 {
                     IsItTrue = false;
-                    for(int i = 1; i<n+1; ++i)
+                    if(Func == "min")
                     {
-                        if(F[i] > 0)
+                        for(int i = 1; i<n+1; ++i)
                         {
-                            IsItTrue = true;
-                            break;
+                            if(F[i] > 0)
+                            {
+                                IsItTrue = true;
+                                break;
+                            }
                         }
+                    }
+                    else if(Func == "max")
+                    {
+                        for(int i = 1; i<n+1; ++i)
+                        {
+                            if(F[i] < 0)
+                            {
+                                IsItTrue = true;
+                                break;
+                            }
+                        } 
                     }
                     if(IsItTrue)
                     {
@@ -393,17 +436,6 @@ namespace SimplexMethodBMSTU
                         PrintAfterGeneralSolver();
                     }
                 }
-                // for(int i = 0; i<m; ++i)
-                // {
-                //     while(cols[i] < 0)
-                //     {
-                //         SimplexTab(Find_row,Find_col);
-                //         Refuel_mass();
-                //     }
-                //     PrintAfterGeneralSolver();
-                //     // перменная
-                //     // break
-                // }
                 if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
                 {
                     Console.WriteLine("Система не имеет решений");
@@ -413,12 +445,26 @@ namespace SimplexMethodBMSTU
                 while(IsItTrue)
                 {
                     IsItTrue = false;
-                    for(int i = 1; i<n+1; ++i)
+                    if(Func == "min")
                     {
-                        if(F[i] > 0)
+                        for(int i = 1; i<n+1; ++i)
                         {
-                            IsItTrue = true;
-                            break;
+                            if(F[i] > 0)
+                            {
+                                IsItTrue = true;
+                                break;
+                            }
+                        }
+                    }
+                    else if(Func == "max")
+                    {
+                        for(int i = 1; i<n+1; ++i)
+                        {
+                            if(F[i] < 0)
+                            {
+                                IsItTrue = true;
+                                break;
+                            }
                         }
                     }
                     if(IsItTrue)
@@ -428,14 +474,7 @@ namespace SimplexMethodBMSTU
                         PrintAfterGeneralSolver();
                     }
                 }
-                // Дописать вывод получившейся таблицы
-                // exit(0) Программа завершена!!!
             }
-            // else 
-            // {
-            //     Console.Write("Система не имеет решений");
-            //     Environment.Exit(0);
-            // }
         }
 
 
