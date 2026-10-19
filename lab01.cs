@@ -20,6 +20,8 @@ namespace SimplexMethodBMSTU
         decimal[] F = null!;
         string Func = null!; // Определение функции (max/min)
         decimal[] F_new = null!;
+        string[] basis_variables = null!;
+        string[] free_variables = null!;
         decimal[,] matrix_new = null!; // массив с кэфами после преобразования
         public SimplexMethod(int n, int m)
         {
@@ -35,6 +37,8 @@ namespace SimplexMethodBMSTU
             matrix_new = new decimal[m, n];
             F_new = new decimal[n + 1];
             cols_new = new decimal[m];
+            basis_variables = new string[m];
+            free_variables = new string[n];
         }
         public void Input()
         {
@@ -71,54 +75,85 @@ namespace SimplexMethodBMSTU
             }
         }
 
-
-        public void Print()
-        {
-            Console.WriteLine("Столбец S:");
-            for (int i = 0; i < m; i++)
-            {
-                Console.Write(cols[i] + " ");
-            }
-            Console.WriteLine();
-            Console.WriteLine("Массив с кэфами:");
-            for (int i = 0; i < m; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    Console.Write(matrix[i, j] + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine("Строка F:");
-            for (int i = 0; i < n + 1; i++)
-            {
-                Console.Write(F[i] + " ");
-            }
-            Console.WriteLine();
-            Console.WriteLine();
-        }
-
         // Вывод получившейся симплекс таблицы
-
         public void PrintSimplexTab()
         {
+            Console.WriteLine();
             Console.WriteLine("Получившаяся симплекс таблица:");
+            Console.Write("\t" + "S_i0" + "\t");
+            for(int i = 0; i<n; ++i)
+            {
+                Console.Write(free_variables[i] + "\t");
+            }
+            Console.WriteLine();
             for(int i = 0; i<m; ++i)
             {
-                Console.Write(cols_new[i] + "\t");
+                Console.Write(basis_variables[i] + "\t");
+                Console.Write($"{cols_new[i]:F2}" + "\t");
                 for(int j = 0; j<n; ++j)
                 {
-                   Console.Write(matrix_new[i,j] + "\t");
+                   Console.Write($"{matrix_new[i,j]:F2}" + "\t");
                 }
                 Console.WriteLine("");
             }
+            Console.Write("F" + "\t");
             for(int i = 0; i<n+1; ++i)
             {
-                Console.Write(F_new[i] + "\t");
+                Console.Write($"{F_new[i]}" + "\t");
             }
-            Console.WriteLine($"\n\nF = {F[0]}");
+            Console.WriteLine($"\n\nF = {F[0]:F2}");
         }
 
+        void InputVariables()
+        {
+            for(int i = 0; i<n; ++i)
+            {
+                free_variables[i] = $"x{i+1}";
+            }
+            for(int i = 0; i<m; ++i)
+            {
+                basis_variables[i] = $"x{n+i+1}";
+            }
+        }
+
+        void SwitchVariables(Func<int> find_row, Func<int> find_col)
+        {
+            int result_row = find_row();
+            int result_col = find_col();
+            if(result_row == -1 || result_col == -1)
+            {
+                return;
+            }
+            string temp_row = basis_variables[result_row];
+            basis_variables[result_row] = free_variables[result_col];
+            free_variables[result_col] = temp_row;
+        }
+
+        void PrintSimplexTabWithVariables()
+        {
+            Console.Write("\t" + "S_io" + "\t");
+            for(int i = 0; i < n; ++i)
+            {
+                Console.Write(free_variables[i] + "\t");
+            }
+            Console.WriteLine();
+            for(int i = 0; i < m; ++i)
+            {
+                Console.Write(basis_variables[i] + "\t" + $"{cols[i]:F2}" + "\t");
+                for(int j = 0; j < n; ++j)
+                {
+                    Console.Write($"{matrix[i,j]:F2}" + "\t");
+                }
+                Console.WriteLine();
+            }
+            Console.Write("F" + "\t");
+            for(int i = 0; i < n+1; ++i)
+            {
+                Console.Write($"{F[i]:F2}" + "\t");
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+        }
 
         // Поиск разщешающего столбца
         int Find_col()
@@ -147,6 +182,10 @@ namespace SimplexMethodBMSTU
             decimal b = 10000000000000000000m;
             int c = -1;
             int col_find = Find_col();
+            if(col_find == -1)
+            {
+                return -1;
+            }
             for(int i = 0; i<m; ++i)
             {
                 if(matrix[i,col_find] != 0)
@@ -304,6 +343,10 @@ namespace SimplexMethodBMSTU
             decimal a;
             decimal c = 10000000000000000000m;
             int b = Find_col_after_general_solver();
+            if(b == -1)
+            {
+                return -1;
+            }
             int g = -1;
             for(int i = 0; i<m; ++i)
             {
@@ -343,8 +386,16 @@ namespace SimplexMethodBMSTU
 
         void PrintAfterGeneralSolver()
         {
+            Console.Write("\t");
+            Console.Write("S_i0" + "\t");
+            for(int i = 1; i<n+1; ++i)
+            {
+                Console.Write($"x{i}" + "\t");
+            }
+            Console.WriteLine();
             for(int i = 0; i<m; ++i)
             {
+                Console.Write($"x{n+i+1}" + "\t");
                 Console.Write(cols[i] + "\t");
                 for(int j = 0; j<n; ++j)
                 {
@@ -352,6 +403,7 @@ namespace SimplexMethodBMSTU
                 }
                 Console.WriteLine();
             }
+            Console.Write("F" + "\t");
             for(int i = 0; i<n+1; ++i)
             {
                 Console.Write(F[i] + "\t");
@@ -360,13 +412,12 @@ namespace SimplexMethodBMSTU
             Console.WriteLine();
         }
 
-
         // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
         void main_func_for_oprimization()
         {
             Input();
-            Print();
             PrintAfterGeneralSolver();
+            InputVariables();
             int check_system = CheckSystem();
             if(check_system == 3)
             {
@@ -410,7 +461,8 @@ namespace SimplexMethodBMSTU
                     {
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
-                        PrintAfterGeneralSolver();
+                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
+                        PrintSimplexTabWithVariables();
                     }
                 }
                 // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
@@ -433,7 +485,8 @@ namespace SimplexMethodBMSTU
                     {
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
-                        PrintAfterGeneralSolver();
+                        SwitchVariables(Find_row,Find_col);
+                        PrintSimplexTabWithVariables();
                     }
                 }
                 if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
@@ -471,7 +524,8 @@ namespace SimplexMethodBMSTU
                     {
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
-                        PrintAfterGeneralSolver();
+                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
+                        PrintSimplexTabWithVariables();
                     }
                 }
             }
@@ -488,8 +542,6 @@ namespace SimplexMethodBMSTU
             int n = int.Parse(Console.ReadLine()!);
 
             var simplexMethod = new SimplexMethod(n, m);
-            //simplexMethod.CheckSystem();
-            //simplexMethod.SimplexTab();
             simplexMethod.main_func_for_oprimization();
             simplexMethod.PrintSimplexTab();
 
